@@ -724,6 +724,8 @@ var addHierachicalElement = function(facet, container, parent, facetGroup, paren
 
         facetInput.checked = true;
         facetInput.setAttribute("data-checked", "");
+        var bonsaiTree = $('#' + bonsaiTreeID).data('bonsai');
+        bonsaiTree.toggle(facetItem);
         bonsaiTree.expandTo(facetItem);
     }
 
@@ -782,7 +784,6 @@ var displayHierarchicalFacetGroup = function(facetGroup, container, searchSettin
     facetGroupContainer.appendChild(extraControlsDiv);
 
     addMoreFacetsListener(searchSettings, facetGroup, moreFacetsLink, facetGroupContainer, showMoreHierarchicalFacetsInDialog);
-
 
     if (searchSettings.facets.hasOwnProperty(facetGroup.id)
         && searchSettings.facets[facetGroup.id] != null

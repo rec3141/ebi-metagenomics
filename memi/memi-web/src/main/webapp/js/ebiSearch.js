@@ -520,20 +520,21 @@ var addMoreHierarchicalFacetsToList = function(searchSettings, facets, facetGrou
             facetValue = facetValuePrefix + "/" + facet.value;
         }
 
-        var identifier = dataType + FACET_SEPARATOR + facetGroupId + FACET_SEPARATOR + facetValue;
+        var identifier = "morefacets" + FACET_SEPARATOR + dataType + FACET_SEPARATOR + facetGroupId + FACET_SEPARATOR + facetValue;
 
         facetItem.id = identifier;
         facetItem.setAttribute(["data-name"], GLOBAL_SEARCH_SETTINGS.MORE_FACET_INPUT_CLASS);
-        facetItem.setAttribute(["data-value"], value);
+        facetItem.setAttribute(["data-value"], facetValue);
         facetItem.appendChild(document.createTextNode(facet.label + " (" + facet.count + ")"));
 
         //initialise checkbox state
         if (searchSettings.facets != null
             && searchSettings.facets.hasOwnProperty(facetGroupId)
             && searchSettings.facets[facetGroupId].indexOf(facetValue) > -1) {
+            facetItem.setAttribute("data-checked", 1);
             if (BASE_URL != MASTER_BASE_URL) console.log("Matched " + searchSettings.type + " Child facet: " + facetGroupId + " name: "
                 + searchSettings.facets[facetGroupId] + " contains " + facetValue);
-            facetItem.setAttribute("data-checked", 1);
+
         }
 
         /*
@@ -800,9 +801,10 @@ var addHierachicalElement = function(facet, container, parent, facetGroup, paren
     if (searchSettings.facets != null
         && searchSettings.facets.hasOwnProperty(facetGroup.id)
         && searchSettings.facets[facetGroup.id].indexOf(value) > -1) {
+        facetItem.setAttribute("data-checked", 1);
         if (BASE_URL != MASTER_BASE_URL) console.log("Matched " + searchSettings.type + " Child facet: " + facetGroup.id + " name: "
             + searchSettings.facets[facetGroup.id] + " contains " + value);
-        facetItem.setAttribute("data-checked", 1);
+
     }
 
     facetItem.appendChild(document.createTextNode(facet.label + " (" + facet.count + ")"));

@@ -312,7 +312,7 @@ var addFacetValueChangeListener = function (facetInput, facetType, searchSetting
                 console.log("Error - expected to find facet type: " + facetType);
             }
         }
-        console.log("Facet clicked " + facetInput.value + " Setting: " + Object.keys(searchSettings.facets));
+        if (BASE_URL != MASTER_BASE_URL) console.log("Facet clicked " + facetInput.value + " Setting: " + Object.keys(searchSettings.facets));
         runDomainSearch(searchSettings);
     });
 };
@@ -334,7 +334,7 @@ var addMoreFacetsListener = function (searchSettings, facetGroup, element, conta
         if (facetCount > 1000) {
             facetCount = 1000;
         }
-        console.log("Fetching " + facetCount + " more facets");
+        if (BASE_URL != MASTER_BASE_URL) console.log("Fetching " + facetCount + " more facets");
         var parameters = {
             "query": encodeURIComponent("domain_source:" + searchSettings.domain),
             "format": "json",
@@ -350,7 +350,7 @@ var addMoreFacetsListener = function (searchSettings, facetGroup, element, conta
         document.body.appendChild(modalOverlay);
         var paramFragment = parametersToString(parameters);
         var url = BASE_URL + searchSettings.domain + paramFragment;
-        console.log("Getting more facets from: " + url);
+        if (BASE_URL != MASTER_BASE_URL) console.log("Getting more facets from: " + url);
         runAjax("GET", url, null, function(event) {
             //success
             var results = JSON.parse(event.response);
@@ -480,7 +480,7 @@ var showMoreHierarchicalFacetsInDialog = function(searchSettings, results, conta
     if (contentDivs != null && contentDivs.length == 1) {
         contentDiv = contentDivs[0];
     } else {
-        console.log("Expect to find exactly one child div with class " + GLOBAL_SEARCH_SETTINGS.MORE_FACET_CONTENT_CLASS);
+        if (BASE_URL != MASTER_BASE_URL) console.log("Expect to find exactly one child div with class " + GLOBAL_SEARCH_SETTINGS.MORE_FACET_CONTENT_CLASS);
     }
 
     var textFilter = container.getElementsByClassName(GLOBAL_SEARCH_SETTINGS.MORE_FACET_TEXT_FILTER_CLASS);
@@ -488,7 +488,7 @@ var showMoreHierarchicalFacetsInDialog = function(searchSettings, results, conta
         var textInput = textFilter[0];
         textInput.style.display = "none";
     } else {
-        console.log("Expect to find exactly one child div with class " + GLOBAL_SEARCH_SETTINGS.MORE_FACET_TEXT_FILTER_CLASS);
+        console.log("Error: Expect to find exactly one child div with class " + GLOBAL_SEARCH_SETTINGS.MORE_FACET_TEXT_FILTER_CLASS);
     }
 
     var treeId = "more-hierarchical-facets-" + facets.id;
@@ -498,12 +498,13 @@ var showMoreHierarchicalFacetsInDialog = function(searchSettings, results, conta
     list.id = treeId;
     addMoreHierarchicalFacetsToList(searchSettings, facets.facetValues, facets.id, null, list);
     contentDiv.appendChild(list);
-    console.log("Converting more facet list to bonsai tree");
+    if (BASE_URL != MASTER_BASE_URL) console.log("Converting more facet list to bonsai tree");
 
     $("#"+treeId).bonsai({
         checkboxes: true,
         expandAll: true,
-        handleDuplicateCheckboxes: true
+        handleDuplicateCheckboxes: true,
+        createInputs: 'checkbox'
     });
 
 };
@@ -512,13 +513,30 @@ var addMoreHierarchicalFacetsToList = function(searchSettings, facets, facetGrou
     var dataType = searchSettings.type;
     for(var i=0; i < facets.length; i++) {
         var facet = facets[i];
-        var listItem = document.createElement("li");
+        var facetItem = document.createElement("li");
 
         var facetValue = facet.value;
         if (facetValuePrefix != null) {
             facetValue = facetValuePrefix + "/" + facet.value;
         }
 
+        var identifier = dataType + FACET_SEPARATOR + facetGroupId + FACET_SEPARATOR + facetValue;
+
+        facetItem.id = identifier;
+        facetItem.setAttribute(["data-name"], GLOBAL_SEARCH_SETTINGS.MORE_FACET_INPUT_CLASS);
+        facetItem.setAttribute(["data-value"], value);
+        facetItem.appendChild(document.createTextNode(facet.label + " (" + facet.count + ")"));
+
+        //initialise checkbox state
+        if (searchSettings.facets != null
+            && searchSettings.facets.hasOwnProperty(facetGroupId)
+            && searchSettings.facets[facetGroupId].indexOf(facetValue) > -1) {
+            if (BASE_URL != MASTER_BASE_URL) console.log("Matched " + searchSettings.type + " Child facet: " + facetGroupId + " name: "
+                + searchSettings.facets[facetGroupId] + " contains " + facetValue);
+            facetItem.setAttribute("data-checked", 1);
+        }
+
+        /*
         var facetInput = document.createElement("input");
         facetInput.type = "checkbox";
         facetInput.classList.add(GLOBAL_SEARCH_SETTINGS.MORE_FACET_INPUT_CLASS);
@@ -533,19 +551,18 @@ var addMoreHierarchicalFacetsToList = function(searchSettings, facets, facetGrou
         var facetLabel = document.createElement("label");
         facetLabel.htmlFor = facetInput.id;
         facetLabel.innerHTML = facet.label + " (" + facet.count + ")";
-        listItem.appendChild(facetInput);
-        listItem.appendChild(facetLabel);
-        list.appendChild(listItem);
+        facetItem.appendChild(facetInput);
+        facetItem.appendChild(facetLabel);
+         */
+        list.appendChild(facetItem);
 
         if (facet.hasOwnProperty("children")
             && facet.children != null
             && facet.children.length > 0) {
             var subList = document.createElement("ul");
-            listItem.appendChild(subList);
+            facetItem.appendChild(subList);
             addMoreHierarchicalFacetsToList(searchSettings, facet.children, facetGroupId, facetValue, subList);
         }
-
-
     }
 };
 
@@ -558,7 +575,7 @@ var showMoreFacetsInDialog = function(searchSettings, results, container) {
     if (contentDivs != null && contentDivs.length == 1) {
         contentDiv = contentDivs[0];
     } else {
-        console.log("Expect to find exactly one child div with class " + GLOBAL_SEARCH_SETTINGS.MORE_FACET_CONTENT_CLASS);
+        console.log("Error: Expect to find exactly one child div with class " + GLOBAL_SEARCH_SETTINGS.MORE_FACET_CONTENT_CLASS);
     }
 
     contentDiv.innerHTML = "";
@@ -571,15 +588,16 @@ var showMoreFacetsInDialog = function(searchSettings, results, container) {
         var identifier = "morefacets" + FACET_SEPARATOR + dataType + FACET_SEPARATOR + facets.id + FACET_SEPARATOR + facet.value;
 
         var listItem = document.createElement("li");
+        listItem.id = identifier;
         listItem.style.display = "inline-block";
         listItem.style.width = "350px";
         listItem.style.padding = "5px";
 
         list.appendChild(listItem);
         var facetInput = document.createElement("input");
-        facetInput.id = identifier;
+        facetInput.id = identifier + "-input";
         facetInput.type = "checkbox";
-        facetInput.classList.add(GLOBAL_SEARCH_SETTINGS.MORE_FACET_INPUT_CLASS);
+        facetInput.setAttribute("name", GLOBAL_SEARCH_SETTINGS.MORE_FACET_INPUT_CLASS);
         facetInput.value = facet.value;
         if (searchSettings.facets != null
             && searchSettings.facets.hasOwnProperty(facets.id)
@@ -598,22 +616,24 @@ var showMoreFacetsInDialog = function(searchSettings, results, container) {
 };
 
 var showMoreFacetsError = function(container) {
-
+    console.log("Error: Something went wrong whilst fetching more facets list");
 };
 
 var runMoreFacetsSearch = function(searchSettings, container) {
-    var facetInputs = document.getElementsByClassName(GLOBAL_SEARCH_SETTINGS.MORE_FACET_INPUT_CLASS);
+    var facetInputs = document.getElementsByName(GLOBAL_SEARCH_SETTINGS.MORE_FACET_INPUT_CLASS);
     for (var i=0; i < facetInputs.length; i++) {
         var checkbox = facetInputs[i];
-        var tokens = checkbox.id.split(FACET_SEPARATOR);
+        var parent = checkbox.parentElement;
+        var tokens = parent.id.split(FACET_SEPARATOR);
         var facetType = tokens[2];
         var facetValue = tokens[3];
+
         if (!searchSettings.facets.hasOwnProperty(facetType)) {
             searchSettings.facets[facetType] = [];
         }
 
         if (checkbox.checked) {
-            console.log("Checkbox: " + checkbox.value + " checked " + facetType + " = " + facetValue);
+            if (BASE_URL != MASTER_BASE_URL) console.log("Checkbox: " + checkbox.value + " checked " + facetType + " = " + facetValue);
             if (searchSettings.facets[facetType].indexOf(facetValue) == -1) {
                 searchSettings.facets[facetType].push(facetValue);
             }
@@ -723,7 +743,7 @@ var displayHierarchicalFacetGroup = function(facetGroup, container, searchSettin
         createInputs: 'checkbox'
     });
 
-    console.log("Converting facet list to bonsai tree");
+    if (BASE_URL != MASTER_BASE_URL) console.log("Converting facet list to bonsai tree");
     var bonsaiTree = $("#"+groupContainerId).data('bonsai');
     if ( searchSettings.bonsaiState.hasOwnProperty(facetGroup.id)
         && searchSettings.bonsaiState[facetGroup.id] != null) {
@@ -780,7 +800,7 @@ var addHierachicalElement = function(facet, container, parent, facetGroup, paren
     if (searchSettings.facets != null
         && searchSettings.facets.hasOwnProperty(facetGroup.id)
         && searchSettings.facets[facetGroup.id].indexOf(value) > -1) {
-        console.log("Matched " + searchSettings.type + " Child facet: " + facetGroup.id + " name: "
+        if (BASE_URL != MASTER_BASE_URL) console.log("Matched " + searchSettings.type + " Child facet: " + facetGroup.id + " name: "
             + searchSettings.facets[facetGroup.id] + " contains " + value);
         facetItem.setAttribute("data-checked", 1);
     }
@@ -817,10 +837,10 @@ var displayFacets = function(facetGroups, searchSettings) {
             if (facetGroup.label !== FACET_SOURCE) {
                 if (isFacetGroupHierarchical(facetGroup)) {
                     displayHierarchicalFacetGroup(facetGroup, facetContainer, searchSettings);
-                    //console.log("FacetGroup Hierarchical " + facetGroup.label);
+                    //if (BASE_URL != MASTER_BASE_URL) console.log("FacetGroup Hierarchical " + facetGroup.label);
                 } else {
                     displayFacetGroup(facetGroup, facetContainer, searchSettings);
-                    //console.log("FacetGroup " + facetGroup.label);
+                    //if (BASE_URL != MASTER_BASE_URL) console.log("FacetGroup " + facetGroup.label);
                 }
 
             }
@@ -961,7 +981,7 @@ var updateTextBoxes = function(container, minInput, maxInput, fieldInput, numeri
     numericalField.selectedMinimum = tokens[0];
     numericalField.selectedMaximum = tokens[1];
 
-    console.log(numericalField.displayName + " range: " + tokens);
+    if (BASE_URL != MASTER_BASE_URL) console.log(numericalField.displayName + " range: " + tokens);
 
     //update text inputs
     if (numericalField.selectedMinimum != numericalField.minimum) {
@@ -984,7 +1004,7 @@ var updateTextBoxes = function(container, minInput, maxInput, fieldInput, numeri
  * @param container
  */
 var displayProjectTable = function(results, container) {
-    console.log("Showing project data");
+    if (BASE_URL != MASTER_BASE_URL) console.log("Showing project data");
 
     table = document.createElement("table");
     table.border = 1;
@@ -1021,7 +1041,7 @@ var displayProjectTable = function(results, container) {
  * @param container
  */
 var displaySampleTable = function(results, container) {
-    console.log("Showing sample data");
+    if (BASE_URL != MASTER_BASE_URL) console.log("Showing sample data");
     table = document.createElement("table");
     table.border = 1;
     table.classList.add("table-light");
@@ -1060,7 +1080,7 @@ var displaySampleTable = function(results, container) {
  * @param container
  */
 var displayRunTable = function(results, container) {
-    console.log("Showing run data");
+    if (BASE_URL != MASTER_BASE_URL) console.log("Showing run data");
     table = document.createElement("table");
     table.border = 1;
     table.classList.add("table-light");
@@ -1135,7 +1155,7 @@ var displayData = function(results, dataType, dsiplaytableFunction) {
 };
 
 var displayDomainData = function(httpReq, searchSettings) {
-    console.log("displayDomain: " + searchSettings.type);
+    if (BASE_URL != MASTER_BASE_URL) console.log("displayDomain: " + searchSettings.type);
 
     var searchElementID = "local-searchbox";
     var searchElement = document.getElementById(searchElementID);
@@ -1148,7 +1168,7 @@ var displayDomainData = function(httpReq, searchSettings) {
 
     var resultString = httpReq.response;
     var results = JSON.parse(resultString);
-    console.log(
+    if (BASE_URL != MASTER_BASE_URL) console.log(
         "Search returned "
         + results.hitCount + " "
         + searchSettings.type + " results"
@@ -1268,11 +1288,11 @@ var parametersToString = function(parameters) {
 }
 
 var runDomainSearch = function(searchSettings) {
-    console.log("Searchtext = " + searchSettings.searchText);
+    if (BASE_URL != MASTER_BASE_URL) console.log("Searchtext = " + searchSettings.searchText);
     sessionStorage.setItem(GLOBAL_SEARCH_SETTINGS.METAGENOMICS_SEARCH_TEXT, searchSettings.searchText);
     sessionStorage.setItem(GLOBAL_SEARCH_SETTINGS.METAGENOMICS_SEARCH_SETTINGS + searchSettings.type,  JSON.stringify(searchSettings));
 
-    console.log("about to push state");
+    //if (BASE_URL != MASTER_BASE_URL) console.log("about to push state");
     history.pushState(JSON.stringify(DatatypeSettings), "search", "/metagenomics/search");
 
     var searchText = searchSettings.searchText;
@@ -1423,11 +1443,11 @@ var displayTabHeader = function() {
 
             setupJQueryTabs(tabContainer, disabledList);
         } else {
-            console.log("Tabs already exist");
+            console.log("Error: Tabs already exist");
         }
 
     } else {
-        console.log("Expected to find div with id 'searchTabs'");
+        console.log("Error: Expected to find div with id 'searchTabs'");
     }
     return tabContainer;
 };
@@ -1453,7 +1473,7 @@ var prepareNewSearchSettings = function() {
 var loadPageFromServer = function(callback, callbackArgs) {
     runAjax("GET", "/metagenomics/search", null, function(httpReq) {
         var response = httpReq.response;
-        console.log("Loading search template");
+        if (BASE_URL != MASTER_BASE_URL) console.log("Loading search template");
         document.documentElement.innerHTML = response;
         loadCss();
         displayTabHeader();

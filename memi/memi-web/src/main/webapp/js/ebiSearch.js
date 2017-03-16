@@ -536,25 +536,6 @@ var addMoreHierarchicalFacetsToList = function(searchSettings, facets, facetGrou
                 + searchSettings.facets[facetGroupId] + " contains " + facetValue);
 
         }
-
-        /*
-        var facetInput = document.createElement("input");
-        facetInput.type = "checkbox";
-        facetInput.classList.add(GLOBAL_SEARCH_SETTINGS.MORE_FACET_INPUT_CLASS);
-        facetInput.value = facetValue;
-        if (searchSettings.facets != null
-            && searchSettings.facets.hasOwnProperty(facetGroupId)
-            && searchSettings.facets[facetGroupId].indexOf(facetInput.value) >= 0) {
-            facetInput.checked = true;
-        }
-        facetInput.id = "morefacets" + FACET_SEPARATOR + dataType + FACET_SEPARATOR + facetGroupId + FACET_SEPARATOR + facetValue;
-
-        var facetLabel = document.createElement("label");
-        facetLabel.htmlFor = facetInput.id;
-        facetLabel.innerHTML = facet.label + " (" + facet.count + ")";
-        facetItem.appendChild(facetInput);
-        facetItem.appendChild(facetLabel);
-         */
         list.appendChild(facetItem);
 
         if (facet.hasOwnProperty("children")
